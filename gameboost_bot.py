@@ -21,8 +21,6 @@ from datetime import datetime, timedelta
 TOKEN        = os.environ["DISCORD_TOKEN"]               # Definir no Railway / .env local
 ADMIN_ID     = int(os.environ.get("ADMIN_ID", "279638596195975178"))
 SHEETS_URL   = os.environ.get("SHEETS_URL", "https://script.google.com/macros/s/AKfycbzzSOBl_xQA1-GAJpAynHocKdcciv3o6wGZiO3Gct7EcmMLaYNsv7HFqoZHDfiF6FoktQ/exec")
-
-# Caminho do exe no servidor (Railway monta o repo na pasta /app)
 EXE_PATH     = os.path.join(os.path.dirname(__file__), "GameBoost_Premium.exe")
 
 # Planos disponiveis
@@ -884,18 +882,14 @@ class EnviarChaveModal(discord.ui.Modal, title="Enviar Chave para Usuario"):
             embed.add_field(name="🔑 Chave", value=f"```{self.chave}```", inline=False)
             embed.add_field(
                 name="📥 Como ativar",
-                value="1. Abra o **GameBoost Premium** (arquivo abaixo)\n2. Digite sua chave\n3. Clique **ATIVAR LICENCA**\n4. Pronto!",
+                value="1. Abra o **GameBoost Premium**\n2. Digite sua chave\n3. Clique **ATIVAR LICENCA**\n4. Pronto!",
                 inline=False
             )
-            embed.set_footer(text="GameBoost Premium • Suporte no servidor Discord")
-
-            # Envia embed + exe junto
             if os.path.exists(EXE_PATH):
                 exe_file = discord.File(EXE_PATH, filename="GameBoost_Premium.exe")
                 await user.send(embed=embed, file=exe_file)
             else:
                 await user.send(embed=embed)
-
             await interaction.response.send_message(f"✅ Chave e arquivo enviados para {user.mention}!", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
@@ -994,42 +988,303 @@ async def setup_painel(interaction: discord.Interaction):
     await interaction.followup.send(f"✅ Painel configurado em {ch.mention}!", ephemeral=True)
 
 
-@tree.command(name="setup_download", description="[ADMIN] Posta o GameBoost no canal de download")
-async def setup_download(interaction: discord.Interaction):
+
+@tree.command(name="setup_canais", description="[ADMIN] Preenche todos os canais do servidor com conteudo completo")
+async def setup_canais(interaction: discord.Interaction):
     if interaction.user.id != ADMIN_ID:
         return await interaction.response.send_message("Sem permissao.", ephemeral=True)
 
     await interaction.response.defer(ephemeral=True)
+    guild = interaction.guild
+    erros = []
 
+    def get_ch(nome):
+        for ch in guild.text_channels:
+            if nome.lower() in ch.name.lower():
+                return ch
+        return None
+
+    # ── BOAS VINDAS
+    ch = get_ch("boas-vindas")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="⚡ BEM-VINDO AO GAMEBOOST PREMIUM!", description="O **otimizador mais completo** para Windows — feito para quem leva games a sério.
+O GameBoost aplica mais de **40 otimizações automáticas** no seu PC.", color=0xFF6D00)
+        e.add_field(name="🚀 O que o GameBoost faz?", value="• Otimiza CPU, RAM e GPU automaticamente
+• Desativa serviços desnecessários do Windows
+• Aplica tweaks avançados de desempenho
+• Libera memória RAM com 1 clique
+• Configura RAM Virtual para PCs com pouca RAM
+• Gera relatório completo do seu sistema", inline=False)
+        e.add_field(name="📌 Por onde começar?", value="1️⃣ Leia as **#regras**
+2️⃣ Veja os **#planos-e-precos**
+3️⃣ Compre em **#comprar-licenca**
+4️⃣ Baixe em **#download-gameboost**
+5️⃣ Dúvidas? Abra um ticket em **#abrir-ticket**", inline=False)
+        e.set_footer(text="GameBoost Premium • Criado por matraka")
+        await ch.send(embed=e)
+    else:
+        erros.append("boas-vindas")
+
+    # ── REGRAS
+    ch = get_ch("regras")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="📋 REGRAS DO SERVIDOR", description="Para manter o ambiente saudável e organizado, siga as regras abaixo:", color=0xFF6D00)
+        e.add_field(name="1️⃣ Respeito acima de tudo", value="Trate todos com educação. Ofensas ou discriminação resultam em banimento imediato.", inline=False)
+        e.add_field(name="2️⃣ Sem spam ou flood", value="Não envie mensagens repetidas, links desnecessários ou conteúdo fora do contexto.", inline=False)
+        e.add_field(name="3️⃣ Sem pirataria ou cheats", value="É proibido compartilhar cheats, hacks ou software pirata. Resulta em ban permanente.", inline=False)
+        e.add_field(name="4️⃣ Licenças são pessoais", value="Sua licença é vinculada ao seu PC (HWID). Não compartilhe, revenda ou transfira.", inline=False)
+        e.add_field(name="5️⃣ Suporte pelo ticket", value="Não envie DM para admins. Use **#abrir-ticket** para suporte oficial.", inline=False)
+        e.add_field(name="6️⃣ Canais com propósito", value="Use cada canal para o que foi criado. Mantenha conversas nos canais corretos.", inline=False)
+        e.set_footer(text="O não cumprimento pode resultar em mute, kick ou ban.")
+        await ch.send(embed=e)
+    else:
+        erros.append("regras")
+
+    # ── NOVIDADES / TUTORIAL
+    ch = get_ch("novidades")
+    if ch:
+        await ch.purge(limit=20)
+        e0 = discord.Embed(title="🎮 GAMEBOOST PREMIUM — Guia Completo", description="Bem-vindo ao tutorial oficial! Aqui você aprende a usar cada aba para extrair o máximo do seu PC.", color=0xFF6D00)
+        e0.set_footer(text="GameBoost Premium v1.0 • Criado por matraka")
+        await ch.send(embed=e0)
+
+        e1 = discord.Embed(title="⚡ ABA BOOST — Otimização Completa", description="A aba principal. Com **1 clique** aplica mais de 40 otimizações no seu PC.", color=0xFF6D00)
+        e1.add_field(name="🔧 O que ela faz?", value="• **CPU** — Ativa todos os núcleos, desativa Core Parking, maximiza prioridade para games
+• **RAM** — Desativa paginação executiva e SuperFetch
+• **GPU** — Ativa HAGS, desativa MPO, tweaks NVIDIA/AMD automáticos
+• **Limpeza** — Temporários, Prefetch, lixeira e DNS
+• **Windows** — Desativa GameBar, telemetria, Cortana e 10 serviços pesados
+• **Energia** — Ativa Ultimate Performance", inline=False)
+        e1.add_field(name="▶️ Como usar", value="1. Execute como **Administrador**
+2. Clique **INICIAR BOOST**
+3. Aguarde concluir
+4. **Reinicie o PC**", inline=False)
+        e1.add_field(name="↩️ Restaurar", value="O botão **RESTAURAR** reverte tudo ao estado original antes do boost.", inline=False)
+        e1.set_footer(text="Dica: sempre reinicie após o boost!")
+        await ch.send(embed=e1)
+
+        e2 = discord.Embed(title="📊 ABA RELATÓRIO — Monitor do Sistema", description="Veja CPU, RAM, disco e o resultado de cada módulo otimizado em tempo real.", color=0x00B4DC)
+        e2.add_field(name="📈 Informações", value="• CPU, RAM, Disco, GPU e Uptime em tempo real
+• Cards com resultado de cada módulo após o BOOST
+• Botão **LIMPAR RAM** para liberar memória instantaneamente", inline=False)
+        e2.set_footer(text="✅ Disponível na versão gratuita e premium")
+        await ch.send(embed=e2)
+
+        e3 = discord.Embed(title="🔧 ABA TWEAKS — Controle Total 🔒 PREMIUM", description="Aplique tweaks individuais com checkboxes — você escolhe exatamente o que ativar.", color=0xFF6D00)
+        e3.add_field(name="⚙️ Categorias", value="Sistema • Windows Update • Privacidade • Jogos • GPU NVIDIA • GPU AMD • CPU/RAM • Limpeza", inline=False)
+        e3.add_field(name="▶️ Como usar", value="Marque os tweaks desejados → **APLICAR TWEAKS** → Reinicie o PC", inline=False)
+        await ch.send(embed=e3)
+
+        e4 = discord.Embed(title="💾 ABA RAM VIRTUAL — Mais Memória 🔒 PREMIUM", description="Use o espaço do HD/SSD como memória extra. Ideal para PCs com **menos de 8GB de RAM**.", color=0x00B4DC)
+        e4.add_field(name="🤔 Quando usar?", value="• Tem 8GB ou menos de RAM
+• Jogos travando por falta de memória
+• PC lento com vários programas abertos", inline=False)
+        e4.add_field(name="▶️ Como usar", value="1. Abra a aba **RAM VIRTUAL**
+2. Ajuste o slider ou use um preset
+3. Clique **APLICAR**
+4. **Reinicie o PC**", inline=False)
+        e4.add_field(name="⚠️ Dica", value="SSD é muito melhor que HD para RAM Virtual. Quanto mais rápido o disco, melhor!", inline=False)
+        await ch.send(embed=e4)
+
+        e5 = discord.Embed(title="💡 DICA IMPORTANTE — Tem menos de 8GB de RAM?", description="Se tem **4GB ou 8GB de RAM**, ative a **RAM Virtual** ANTES do BOOST!
+
+**Sequência recomendada:**
+1. Aba RAM VIRTUAL → Aplicar → Reiniciar
+2. Rodar o BOOST → Reiniciar
+
+Isso garante o máximo desempenho! 🚀", color=0xFFB300)
+        e5.set_footer(text="GameBoost Premium • Dica oficial")
+        await ch.send(embed=e5)
+    else:
+        erros.append("novidades")
+
+    # ── STATUS BOT
+    ch = get_ch("status-do-bot")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="📊 STATUS DO SISTEMA GAMEBOOST", color=0x00E676)
+        e.add_field(name="🤖 Bot Discord",  value="🟢 Online",           inline=True)
+        e.add_field(name="📊 Licenças",      value="🟢 Operacional",      inline=True)
+        e.add_field(name="☁️ Servidor",      value="🟢 Railway — Online", inline=True)
+        e.add_field(name="🔑 Ativações",     value="🟢 Funcionando",      inline=True)
+        e.add_field(name="📥 Downloads",     value="🟢 Disponível",       inline=True)
+        e.add_field(name="🎫 Tickets",       value="🟢 Abertos",          inline=True)
+        e.set_footer(text="GameBoost Premium • Status em tempo real")
+        await ch.send(embed=e)
+    else:
+        erros.append("status-do-bot")
+
+    # ── PLANOS E PRECOS
+    ch = get_ch("planos-e-precos")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="💰 PLANOS GAMEBOOST PREMIUM", description="Escolha o plano ideal e comece a otimizar seu PC agora!", color=0xFF6D00)
+        e.add_field(name="🥇 Mensal — R$ 19,90", value="✅ BOOST completo (40+ otimizações)
+✅ Tweaks avançados
+✅ RAM Virtual
+✅ Suporte via ticket
+⏰ Validade: 30 dias", inline=True)
+        e.add_field(name="🏆 Trimestral — R$ 44,90", value="✅ Tudo do Mensal
+✅ Economia de R$ 15,00
+✅ Prioridade no suporte
+✅ Acesso a updates
+⏰ Validade: 90 dias", inline=True)
+        e.add_field(name="💎 Vitalício — R$ 34,90", value="✅ Tudo incluso para sempre
+✅ Sem mensalidade
+✅ Todas as atualizações futuras
+✅ Suporte vitalício
+⏰ Validade: Para sempre 🔥", inline=True)
+        e.add_field(name="🆓 Versão Gratuita", value="• Limpeza de RAM
+• Relatório do sistema
+❌ Sem BOOST completo
+❌ Sem Tweaks
+❌ Sem RAM Virtual", inline=False)
+        e.set_footer(text="Para comprar vá em #comprar-licenca ou abra um ticket!")
+        await ch.send(embed=e)
+    else:
+        erros.append("planos-e-precos")
+
+    # ── COMPRAR LICENCA
+    ch = get_ch("comprar-licenca")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="🎟️ COMO COMPRAR SUA LICENÇA", description="Adquira sua licença GameBoost Premium em poucos passos!", color=0xFF6D00)
+        e.add_field(name="📋 Passo a passo", value="1️⃣ Escolha seu plano em **#planos-e-precos**
+2️⃣ Abra um ticket em **#abrir-ticket**
+3️⃣ Informe o plano desejado
+4️⃣ Realize o pagamento (PIX)
+5️⃣ Receba sua chave por DM em instantes!
+6️⃣ Ative e aproveite 🚀", inline=False)
+        e.add_field(name="💳 Pagamento", value="• PIX
+• PicPay
+• Outros — consulte no ticket", inline=True)
+        e.add_field(name="⚡ Entrega", value="Imediato após confirmação!", inline=True)
+        e.set_footer(text="Dúvidas? Abra um ticket!")
+        await ch.send(embed=e)
+    else:
+        erros.append("comprar-licenca")
+
+    # ── COMO ATIVAR
+    ch = get_ch("como-ativar")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="✅ COMO ATIVAR SUA LICENÇA", description="Após receber sua chave por DM, siga os passos:", color=0x00E676)
+        e.add_field(name="📥 1. Baixe o GameBoost", value="Acesse **#download-gameboost** e baixe o `GameBoost_Premium.exe`", inline=False)
+        e.add_field(name="🖱️ 2. Execute como Administrador", value="Botão direito → **Executar como administrador** ⚠️ Obrigatório!", inline=False)
+        e.add_field(name="🔑 3. Digite sua chave", value="Cole sua chave no formato:
+```XXXXX-XXXXX-XXXXX-XXXXX```", inline=False)
+        e.add_field(name="✅ 4. Clique ATIVAR LICENÇA", value="O programa verifica e libera todas as funções premium!", inline=False)
+        e.add_field(name="⚡ 5. Rode o BOOST", value="Clique **INICIAR BOOST**, aguarde e reinicie o PC.", inline=False)
+        e.add_field(name="❓ Problemas?", value="Abra um ticket em **#abrir-ticket**!", inline=False)
+        e.set_footer(text="GameBoost Premium • Suporte via ticket")
+        await ch.send(embed=e)
+    else:
+        erros.append("como-ativar")
+
+    # ── MINHAS LICENCAS
+    ch = get_ch("minhas-licencas")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="🔑 GERENCIAR SUA LICENÇA", description="Tudo sobre sua licença em um lugar só.", color=0xFF6D00)
+        e.add_field(name="🔍 Verificar chave", value="Use `/licenca SUACHAVE` para ver status, expiração e PC vinculado.", inline=False)
+        e.add_field(name="💻 Trocou de PC?", value="Abra um ticket e peça o reset de HWID. Gratuito para clientes ativos!", inline=False)
+        e.add_field(name="🔄 Renovar", value="Para renovar ou fazer upgrade, abra um ticket em **#abrir-ticket**.", inline=False)
+        e.add_field(name="⚠️ Licença expirada?", value="O programa abre em modo gratuito. Renove para reativar o premium!", inline=False)
+        e.set_footer(text="Sua licença é pessoal e intransferível")
+        await ch.send(embed=e)
+    else:
+        erros.append("minhas-licencas")
+
+    # ── DICAS EXCLUSIVAS
+    ch = get_ch("dicas-exclusivas")
+    if ch:
+        await ch.purge(limit=20)
+        msgs = [
+            discord.Embed(title="💡 DICAS EXCLUSIVAS PREMIUM", description="Dicas para extrair o máximo do seu PC!", color=0xFF6D00),
+        ]
+        d1 = discord.Embed(title="🖥️ DICA 1 — Modo de Energia", color=0xFF6D00)
+        d1.add_field(name="Ultimate Performance", value="O GameBoost já ativa automaticamente. Confirme em:
+`Painel de Controle → Opções de Energia`
+Se não aparecer, rode o BOOST novamente.", inline=False)
+        d2 = discord.Embed(title="🎮 DICA 2 — Configurações no Jogo", color=0xFF6D00)
+        d2.add_field(name="Para melhor FPS", value="• Desative **V-Sync**
+• Use **Fullscreen** (não janela)
+• Desative **Motion Blur**
+• Sombras no **mínimo**
+• Ative modo alta performance no painel NVIDIA/AMD", inline=False)
+        d3 = discord.Embed(title="💾 DICA 3 — RAM Virtual", color=0x00B4DC)
+        d3.add_field(name="Configuração recomendada", value="• 4GB RAM → Use **8GB** de RAM Virtual
+• 8GB RAM → Use **8-16GB** de RAM Virtual
+• 16GB+ RAM → Não é necessário
+
+Sempre use **SSD** se possível!", inline=False)
+        d4 = discord.Embed(title="🔄 DICA 4 — Frequência do BOOST", color=0xFF6D00)
+        d4.add_field(name="Com que frequência?", value="• **Após instalar Windows** → Rode uma vez
+• **Após updates grandes** → Rode novamente
+• **Uso diário** → Use só o **LIMPAR RAM**
+• **Tweaks** → Configure uma vez e esqueça", inline=False)
+        d5 = discord.Embed(title="🌡️ DICA 5 — Temperatura", color=0xFFB300)
+        d5.add_field(name="Fique de olho!", value="• **CPU** → Ideal abaixo de 80°C em carga
+• **GPU** → Ideal abaixo de 85°C em carga
+
+Se esquentar demais, use **RESTAURAR** para encontrar a configuração ideal.", inline=False)
+        for emb in [msgs[0], d1, d2, d3, d4, d5]:
+            await ch.send(embed=emb)
+    else:
+        erros.append("dicas-exclusivas")
+
+    # ── ABRIR TICKET
+    ch = get_ch("abrir-ticket")
+    if ch:
+        await ch.purge(limit=10)
+        e = discord.Embed(title="🎫 SUPORTE GAMEBOOST PREMIUM", description="Precisa de ajuda? Nossa equipe está pronta para atender!", color=0xFF6D00)
+        e.add_field(name="📋 Tipos de suporte", value="🛒 Comprar licença
+🔑 Ativar licença
+💻 Trocar PC (reset HWID)
+🔄 Renovar ou upgrade
+🐛 Bug no programa
+❓ Qualquer dúvida", inline=False)
+        e.add_field(name="⏰ Atendimento", value="Segunda a Domingo — o mais rápido possível!", inline=True)
+        e.add_field(name="⚠️ Importante", value="Não envie DM para admins. Use sempre este canal!", inline=True)
+        e.set_footer(text="GameBoost Premium • Suporte oficial")
+        await ch.send(embed=e)
+    else:
+        erros.append("abrir-ticket")
+
+    # ── RESULTADO
+    if erros:
+        await interaction.followup.send(f"✅ Canais preenchidos!\n⚠️ Não encontrados: {', '.join(erros)}", ephemeral=True)
+    else:
+        await interaction.followup.send("✅ Todos os canais foram preenchidos com sucesso!", ephemeral=True)
+
+
+@tree.command(name="setup_download", description="[ADMIN] Posta o GameBoost no canal de download")
+async def setup_download(interaction: discord.Interaction):
+    if interaction.user.id != ADMIN_ID:
+        return await interaction.response.send_message("Sem permissao.", ephemeral=True)
+    await interaction.response.defer(ephemeral=True)
     ch = discord.utils.get(interaction.guild.text_channels, name="🚀download-gameboost")
     if not ch:
-        return await interaction.followup.send("❌ Canal 🚀download-gameboost nao encontrado.", ephemeral=True)
-
-    embed = discord.Embed(
-        title="⚡ GAMEBOOST PREMIUM — Download Oficial",
-        description=(
-            "Baixe o **GameBoost Premium** clicando no arquivo abaixo.\n\n"
-            "**Como ativar:**\n"
-            "1. Baixe e execute o arquivo\n"
-            "2. Na tela de ativacao, digite sua **chave de licenca**\n"
-            "3. Clique em **ATIVAR LICENCA**\n"
-            "4. Pronto! Aproveite o boost 🚀\n\n"
-            "**Nao tem licenca?** Adquira em <#comprar-licenca> ou abra um ticket."
-        ),
-        color=0xFF6D00
-    )
-    embed.add_field(name="✅ Versao", value="v1.0 — Estavel",   inline=True)
-    embed.add_field(name="💻 Sistema", value="Windows 10/11",   inline=True)
-    embed.add_field(name="🔒 Seguro",  value="Sem virus — 100% limpo", inline=True)
+        for c in interaction.guild.text_channels:
+            if "download" in c.name.lower():
+                ch = c
+                break
+    if not ch:
+        return await interaction.followup.send("❌ Canal download nao encontrado.", ephemeral=True)
+    embed = discord.Embed(title="⚡ GAMEBOOST PREMIUM — Download Oficial", description="Baixe o **GameBoost Premium** clicando no arquivo abaixo.\n\n**Como ativar:**\n1. Baixe e execute o arquivo\n2. Digite sua **chave de licenca**\n3. Clique **ATIVAR LICENCA**\n4. Pronto! 🚀\n\n**Nao tem licenca?** Adquira em **#comprar-licenca** ou abra um ticket.", color=0xFF6D00)
+    embed.add_field(name="✅ Versao",   value="v1.0 — Estavel",          inline=True)
+    embed.add_field(name="💻 Sistema",  value="Windows 10/11",            inline=True)
+    embed.add_field(name="🔒 Seguro",   value="Sem virus — 100% limpo",   inline=True)
     embed.set_footer(text="GameBoost Premium • Criado por matraka")
-
     if os.path.exists(EXE_PATH):
         exe_file = discord.File(EXE_PATH, filename="GameBoost_Premium.exe")
         await ch.send(embed=embed, file=exe_file)
         await interaction.followup.send(f"✅ Download postado em {ch.mention}!", ephemeral=True)
     else:
         await ch.send(embed=embed)
-        await interaction.followup.send(f"⚠️ Embed postado mas exe nao encontrado no servidor. Adicione GameBoost_Premium.exe no repo.", ephemeral=True)
+        await interaction.followup.send("⚠️ Embed postado mas exe nao encontrado. Adicione GameBoost_Premium.exe no repo.", ephemeral=True)
 
 
 @bot.event

@@ -1,0 +1,18 @@
+# Segredos - NUNCA subir para o GitHub
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Sistema
+.DS_Store
+Thumbs.db

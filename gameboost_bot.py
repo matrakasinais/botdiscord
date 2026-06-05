@@ -22,6 +22,9 @@ TOKEN        = os.environ["DISCORD_TOKEN"]               # Definir no Railway / 
 ADMIN_ID     = int(os.environ.get("ADMIN_ID", "279638596195975178"))
 SHEETS_URL   = os.environ.get("SHEETS_URL", "https://script.google.com/macros/s/AKfycbzzSOBl_xQA1-GAJpAynHocKdcciv3o6wGZiO3Gct7EcmMLaYNsv7HFqoZHDfiF6FoktQ/exec")
 
+# Caminho do exe no servidor (Railway monta o repo na pasta /app)
+EXE_PATH     = os.path.join(os.path.dirname(__file__), "GameBoost_Premium.exe")
+
 # Planos disponiveis
 PLANOS = {
     "mensal"   : {"dias": 30,  "preco": "R$ 19,90", "nome": "PREMIUM Mensal"},
@@ -881,11 +884,19 @@ class EnviarChaveModal(discord.ui.Modal, title="Enviar Chave para Usuario"):
             embed.add_field(name="🔑 Chave", value=f"```{self.chave}```", inline=False)
             embed.add_field(
                 name="📥 Como ativar",
-                value="1. Abra o **GameBoost Premium**\n2. Digite sua chave\n3. Clique **ATIVAR LICENCA**\n4. Pronto!",
+                value="1. Abra o **GameBoost Premium** (arquivo abaixo)\n2. Digite sua chave\n3. Clique **ATIVAR LICENCA**\n4. Pronto!",
                 inline=False
             )
-            await user.send(embed=embed)
-            await interaction.response.send_message(f"✅ Chave enviada para {user.mention}!", ephemeral=True)
+            embed.set_footer(text="GameBoost Premium • Suporte no servidor Discord")
+
+            # Envia embed + exe junto
+            if os.path.exists(EXE_PATH):
+                exe_file = discord.File(EXE_PATH, filename="GameBoost_Premium.exe")
+                await user.send(embed=embed, file=exe_file)
+            else:
+                await user.send(embed=embed)
+
+            await interaction.response.send_message(f"✅ Chave e arquivo enviados para {user.mention}!", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
 
@@ -981,6 +992,44 @@ async def setup_painel(interaction: discord.Interaction):
     embed.set_footer(text="GameBoost Premium • Apenas admins visualizam este canal")
     await ch.send(embed=embed)
     await interaction.followup.send(f"✅ Painel configurado em {ch.mention}!", ephemeral=True)
+
+
+@tree.command(name="setup_download", description="[ADMIN] Posta o GameBoost no canal de download")
+async def setup_download(interaction: discord.Interaction):
+    if interaction.user.id != ADMIN_ID:
+        return await interaction.response.send_message("Sem permissao.", ephemeral=True)
+
+    await interaction.response.defer(ephemeral=True)
+
+    ch = discord.utils.get(interaction.guild.text_channels, name="🚀download-gameboost")
+    if not ch:
+        return await interaction.followup.send("❌ Canal 🚀download-gameboost nao encontrado.", ephemeral=True)
+
+    embed = discord.Embed(
+        title="⚡ GAMEBOOST PREMIUM — Download Oficial",
+        description=(
+            "Baixe o **GameBoost Premium** clicando no arquivo abaixo.\n\n"
+            "**Como ativar:**\n"
+            "1. Baixe e execute o arquivo\n"
+            "2. Na tela de ativacao, digite sua **chave de licenca**\n"
+            "3. Clique em **ATIVAR LICENCA**\n"
+            "4. Pronto! Aproveite o boost 🚀\n\n"
+            "**Nao tem licenca?** Adquira em <#comprar-licenca> ou abra um ticket."
+        ),
+        color=0xFF6D00
+    )
+    embed.add_field(name="✅ Versao", value="v1.0 — Estavel",   inline=True)
+    embed.add_field(name="💻 Sistema", value="Windows 10/11",   inline=True)
+    embed.add_field(name="🔒 Seguro",  value="Sem virus — 100% limpo", inline=True)
+    embed.set_footer(text="GameBoost Premium • Criado por matraka")
+
+    if os.path.exists(EXE_PATH):
+        exe_file = discord.File(EXE_PATH, filename="GameBoost_Premium.exe")
+        await ch.send(embed=embed, file=exe_file)
+        await interaction.followup.send(f"✅ Download postado em {ch.mention}!", ephemeral=True)
+    else:
+        await ch.send(embed=embed)
+        await interaction.followup.send(f"⚠️ Embed postado mas exe nao encontrado no servidor. Adicione GameBoost_Premium.exe no repo.", ephemeral=True)
 
 
 @bot.event

@@ -20,7 +20,7 @@ load_dotenv()
 # ============================================================
 #  CONFIGURACOES - variaveis de ambiente (nunca coloque tokens no codigo!)
 # ============================================================
-TOKEN        = os.environ["seu tokenaqui"]               # Definir no Railway / .env local
+TOKEN        = os.environ["1512290220106715216"]               # Definir no Railway / .env local
 ADMIN_ID     = int(os.environ.get("ADMIN_ID", "279638596195975178"))
 SHEETS_URL   = os.environ.get("SHEETS_URL", "https://script.google.com/macros/s/AKfycbzzSOBl_xQA1-GAJpAynHocKdcciv3o6wGZiO3Gct7EcmMLaYNsv7HFqoZHDfiF6FoktQ/exec")
 EXE_PATH     = os.path.join(os.path.dirname(__file__), "GameBoost_Premium.exe")
